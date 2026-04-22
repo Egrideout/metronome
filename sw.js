@@ -1,5 +1,5 @@
-const CACHE = 'metronome-v1';
-const ASSETS = ['./', './index.html', './style.css', './app.js', './manifest.json', './icon.svg'];
+const CACHE = 'metronome-v2';
+const ASSETS = ['/metronome/', '/metronome/index.html', '/metronome/style.css', '/metronome/app.js', '/metronome/manifest.json', '/metronome/icon.svg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));

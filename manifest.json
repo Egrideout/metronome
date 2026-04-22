@@ -2,7 +2,7 @@
   "name": "Metronome",
   "short_name": "Metronome",
   "description": "Piano practice metronome",
-  "start_url": "/",
+  "start_url": "/metronome/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0d0d0d",
