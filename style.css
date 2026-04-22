@@ -1,0 +1,415 @@
+/* ── Reset ─────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: #0d0d0d;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* ── App shell ─────────────────────────────────────────────────────────── */
+#app {
+  height: 100dvh;
+  padding:
+    max(env(safe-area-inset-top), 20px)
+    max(env(safe-area-inset-right), 24px)
+    max(env(safe-area-inset-bottom), 16px)
+    max(env(safe-area-inset-left), 24px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+/* ── Beat indicator ────────────────────────────────────────────────────── */
+#beat-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+
+.beat-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #222;
+  transition: transform 0.05s ease-out, background 0.05s ease-out, box-shadow 0.05s;
+  flex-shrink: 0;
+}
+
+.beat-dot.small { width: 20px; height: 20px; }
+
+/* Accent dots: slightly brighter ring when inactive */
+.beat-dot.accent-dim { background: #2d1f00; border: 1.5px solid #4a3300; }
+
+.beat-dot.mid-dim    { background: #1e1e00; border: 1.5px solid #333300; }
+
+.beat-dot.active {
+  background: #ffc107;
+  transform: scale(1.12);
+}
+
+.beat-dot.active.accent-dim {
+  background: #FF9500;
+  transform: scale(1.28);
+  box-shadow: 0 0 14px rgba(255,149,0,0.55);
+}
+
+.beat-dot.active.mid-dim {
+  background: #e0c000;
+  transform: scale(1.18);
+}
+
+/* ── BPM section ───────────────────────────────────────────────────────── */
+#bpm-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+#bpm-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+#bpm-value {
+  font-size: clamp(72px, 22vw, 96px);
+  font-weight: 100;
+  line-height: 1;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -2px;
+  min-width: 3ch;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+#bpm-input {
+  display: none;
+  font-size: clamp(72px, 22vw, 96px);
+  font-weight: 100;
+  line-height: 1;
+  color: #fff;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid #FF9500;
+  outline: none;
+  width: 4ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -2px;
+  font-family: inherit;
+  -moz-appearance: textfield;
+}
+#bpm-input::-webkit-inner-spin-button,
+#bpm-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+#bpm-section.editing #bpm-value  { display: none; }
+#bpm-section.editing #bpm-input  { display: block; }
+
+#bpm-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  letter-spacing: 3px;
+}
+
+/* ── Slider ────────────────────────────────────────────────────────────── */
+#bpm-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  background: linear-gradient(
+    to right,
+    #FF9500 0%,
+    #FF9500 var(--fill, 50%),
+    #2c2c2c var(--fill, 50%),
+    #2c2c2c 100%
+  );
+}
+
+#bpm-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #FF9500;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+#bpm-slider::-moz-range-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #FF9500;
+  border: none;
+  cursor: pointer;
+}
+
+/* ── Controls row ──────────────────────────────────────────────────────── */
+#controls-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+}
+
+.nudge-btn {
+  width: 62px;
+  height: 62px;
+  border-radius: 15px;
+  background: #1a1a1a;
+  border: none;
+  color: #fff;
+  font-size: 42px;
+  font-weight: 100;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  user-select: none;
+  line-height: 1;
+}
+
+.nudge-btn:active { background: #252525; }
+
+#btn-tap {
+  flex: 1;
+  height: 62px;
+  border-radius: 15px;
+  background: rgba(255, 149, 0, 0.10);
+  border: 1px solid rgba(255, 149, 0, 0.28);
+  color: #FF9500;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+#btn-tap:active { background: rgba(255, 149, 0, 0.20); }
+
+/* ── Time signature ────────────────────────────────────────────────────── */
+#time-sig-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #444;
+  letter-spacing: 2px;
+}
+
+#time-sig-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.sig-chip {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #1a1a1a;
+  border: 1px solid transparent;
+  color: #888;
+  font-size: 14px;
+  font-family: 'SF Mono', 'Courier New', monospace;
+  cursor: pointer;
+  min-width: 46px;
+  text-align: center;
+  transition: background 0.12s, color 0.12s;
+  user-select: none;
+}
+
+.sig-chip.selected {
+  background: #FF9500;
+  color: #000;
+  font-weight: 700;
+}
+
+.sig-chip:active:not(.selected) { background: #252525; }
+
+/* ── Play/Stop button ──────────────────────────────────────────────────── */
+#play-btn {
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  background: #FF9500;
+  border: none;
+  color: #000;
+  font-size: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, transform 0.06s;
+  user-select: none;
+}
+
+#play-btn.playing { background: #1e1e1e; color: #fff; font-size: 26px; }
+#play-btn:active  { transform: scale(0.93); }
+#play-icon        { margin-left: 4px; }
+
+/* ── Presets bar ───────────────────────────────────────────────────────── */
+#presets-bar {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#btn-presets, #btn-save {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 8px 4px;
+}
+
+#btn-presets { color: #777; }
+#btn-save    { color: #FF9500; }
+#btn-presets:active { color: #aaa; }
+#btn-save:active    { color: #ffc04d; }
+
+/* ── Presets dialog (bottom sheet) ────────────────────────────────────── */
+dialog {
+  position: fixed;
+  inset: auto 0 0 0;
+  margin: 0;
+  width: 100%;
+  max-height: 65dvh;
+  background: #161616;
+  border: none;
+  border-top: 1px solid #2a2a2a;
+  border-radius: 20px 20px 0 0;
+  padding: 0;
+  color: #fff;
+  outline: none;
+}
+
+dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+dialog[open] { animation: slideUp 0.28s ease-out; }
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+dialog::backdrop { background: rgba(0,0,0,0.55); }
+
+#dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid #242424;
+  flex-shrink: 0;
+}
+
+#dialog-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+#dialog-done {
+  background: none;
+  border: none;
+  color: #FF9500;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0 4px 16px;
+}
+
+#presets-list {
+  overflow-y: auto;
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
+}
+
+.preset-row {
+  display: flex;
+  align-items: center;
+  padding: 13px 20px;
+  border-bottom: 1px solid #1e1e1e;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.preset-row:active { background: #1e1e1e; }
+
+.preset-info { flex: 1; min-width: 0; }
+
+.preset-name {
+  font-size: 16px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preset-meta {
+  font-size: 13px;
+  color: #555;
+  margin-top: 2px;
+}
+
+.preset-del {
+  background: none;
+  border: none;
+  color: #444;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.preset-del:active { color: #cc3333; }
+
+#no-presets {
+  text-align: center;
+  color: #444;
+  font-size: 15px;
+  line-height: 1.6;
+  padding: 36px 24px;
+  margin: 0;
+}

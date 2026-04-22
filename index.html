@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Metronome">
+  <meta name="theme-color" content="#0d0d0d">
+  <title>Metronome</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+
+    <div id="beat-row" aria-label="Beat indicator"></div>
+
+    <div id="bpm-section">
+      <div id="bpm-display">
+        <div id="bpm-value" role="button" tabindex="0" aria-label="BPM, tap to edit">120</div>
+        <input id="bpm-input" type="number" min="20" max="300" inputmode="numeric" aria-label="Enter BPM">
+        <div id="bpm-label">BPM</div>
+      </div>
+
+      <input type="range" id="bpm-slider" min="20" max="300" value="120" step="1" aria-label="BPM">
+
+      <div id="controls-row">
+        <button id="btn-minus" class="nudge-btn" aria-label="Decrease BPM">−</button>
+        <button id="btn-tap" aria-label="Tap tempo">TAP<br>TEMPO</button>
+        <button id="btn-plus" class="nudge-btn" aria-label="Increase BPM">+</button>
+      </div>
+    </div>
+
+    <div id="time-sig-section">
+      <div class="section-label">TIME SIGNATURE</div>
+      <div id="time-sig-row" role="radiogroup" aria-label="Time signature"></div>
+    </div>
+
+    <button id="play-btn" aria-label="Play">
+      <span id="play-icon">▶</span>
+      <span id="stop-icon" hidden>■</span>
+    </button>
+
+    <div id="presets-bar">
+      <button id="btn-presets">☰ Presets</button>
+      <button id="btn-save">＋ Save</button>
+    </div>
+
+  </div>
+
+  <!-- Presets bottom sheet -->
+  <dialog id="presets-dialog" aria-label="Presets">
+    <div id="dialog-header">
+      <h2>Presets</h2>
+      <button id="dialog-done">Done</button>
+    </div>
+    <div id="presets-list"></div>
+    <p id="no-presets">No presets yet.<br>Tap Save on the main screen.</p>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

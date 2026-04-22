@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="#111"/>
+  <!-- Metronome body (trapezoid outline) -->
+  <path d="M168 395 L344 395 L304 148 L208 148 Z"
+        fill="none" stroke="#333" stroke-width="20" stroke-linejoin="round"/>
+  <!-- Base -->
+  <rect x="152" y="382" width="208" height="36" rx="10" fill="#FF9500"/>
+  <!-- Needle -->
+  <line x1="256" y1="172" x2="308" y2="368"
+        stroke="#FF9500" stroke-width="14" stroke-linecap="round"/>
+  <!-- Pivot -->
+  <circle cx="256" cy="172" r="14" fill="#FF9500"/>
+  <!-- Weight block -->
+  <rect x="294" y="256" width="40" height="22" rx="5" fill="#FF9500"/>
+</svg>
