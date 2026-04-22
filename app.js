@@ -7,7 +7,7 @@
 const TIME_SIGNATURES = {
   '2/4': { beats: 2, accent: new Set([0]),       mid: new Set([])     },
   '3/4': { beats: 3, accent: new Set([0]),       mid: new Set([])     },
-  '4/4': { beats: 4, accent: new Set([0]),       mid: new Set([2])    },
+  '4/4': { beats: 4, accent: new Set([0]),       mid: new Set([])     },
   '5/4': { beats: 5, accent: new Set([0]),       mid: new Set([])     },
   '6/8': { beats: 6, accent: new Set([0]),       mid: new Set([3])    },
   '7/8': { beats: 7, accent: new Set([0]),       mid: new Set([4])    },
