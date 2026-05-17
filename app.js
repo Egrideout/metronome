@@ -16,11 +16,11 @@ const TIME_SIGNATURES = {
 
 // ── MetronomeEngine ──────────────────────────────────────────────────────────
 
-const CLICK_GAIN = 1.65;
+const CLICK_GAIN = 2.4;
 const CLICK_SETTINGS = {
-  accent: { freq: 1500, duration: 0.075, amplitude: 0.95, decayRate: 28 },
-  mid:    { freq: 1100, duration: 0.070, amplitude: 0.82, decayRate: 32 },
-  normal: { freq: 850,  duration: 0.065, amplitude: 0.72, decayRate: 36 },
+  accent: { freq: 1500, duration: 0.115, amplitude: 0.98, decayRate: 14, harmonic: 0.28 },
+  mid:    { freq: 1120, duration: 0.105, amplitude: 0.92, decayRate: 15, harmonic: 0.22 },
+  normal: { freq: 880,  duration: 0.095, amplitude: 0.88, decayRate: 16, harmonic: 0.14 },
 };
 
 class MetronomeEngine {
@@ -31,6 +31,7 @@ class MetronomeEngine {
 
     this._ctx         = null;
     this._masterGain  = null;
+    this._compressor  = null;
     this._accentBuf   = null;
     this._midBuf      = null;
     this._clickBuf    = null;
@@ -53,7 +54,15 @@ class MetronomeEngine {
       this._ctx = new AudioContext();
       this._masterGain = this._ctx.createGain();
       this._masterGain.gain.value = CLICK_GAIN;
-      this._masterGain.connect(this._ctx.destination);
+
+      this._compressor = this._ctx.createDynamicsCompressor();
+      this._compressor.threshold.value = -16;
+      this._compressor.knee.value = 20;
+      this._compressor.ratio.value = 6;
+      this._compressor.attack.value = 0.003;
+      this._compressor.release.value = 0.08;
+      this._masterGain.connect(this._compressor);
+      this._compressor.connect(this._ctx.destination);
 
       this._accentBuf = this._makeClick(CLICK_SETTINGS.accent);
       this._midBuf    = this._makeClick(CLICK_SETTINGS.mid);
@@ -64,18 +73,23 @@ class MetronomeEngine {
     }
   }
 
-  _makeClick({ freq, duration, amplitude, decayRate }) {
+  _makeClick({ freq, duration, amplitude, decayRate, harmonic }) {
     const sr = this._ctx.sampleRate;
     const len = Math.floor(sr * duration);
     const buf = this._ctx.createBuffer(2, len, sr);
-    const attack = Math.max(1, Math.floor(sr * 0.001)); // 1 ms ramp to avoid DC click
+    const attack = Math.max(1, Math.floor(sr * 0.006));
+    const release = Math.max(1, Math.floor(sr * 0.018));
 
     for (let ch = 0; ch < 2; ch++) {
       const d = buf.getChannelData(ch);
       for (let i = 0; i < len; i++) {
-        const t   = i / sr;
-        const env = (i < attack ? i / attack : 1) * Math.exp(-t * decayRate);
-        d[i] = amplitude * env * Math.sin(2 * Math.PI * freq * t);
+        const t = i / sr;
+        const attackEnv = i < attack ? 0.5 - 0.5 * Math.cos(Math.PI * i / attack) : 1;
+        const releaseEnv = i > len - release ? Math.max(0, (len - i) / release) : 1;
+        const env = attackEnv * releaseEnv * Math.exp(-t * decayRate);
+        const fundamental = Math.sin(2 * Math.PI * freq * t);
+        const overtone = Math.sin(2 * Math.PI * freq * 2 * t);
+        d[i] = amplitude * env * (fundamental + harmonic * overtone) / (1 + harmonic);
       }
     }
     return buf;
