@@ -1,4 +1,4 @@
-const CACHE = 'metronome-v4';
+const CACHE = 'metronome-v5';
 const ASSETS = ['/metronome/', '/metronome/index.html', '/metronome/style.css', '/metronome/app.js', '/metronome/manifest.json', '/metronome/icon.svg'];
 
 self.addEventListener('install', e => {

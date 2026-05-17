@@ -16,12 +16,39 @@ const TIME_SIGNATURES = {
 
 // ── MetronomeEngine ──────────────────────────────────────────────────────────
 
-const CLICK_GAIN = 2.4;
+const CLICK_OUTPUT_GAIN = 0.98;
 const CLICK_SETTINGS = {
-  accent: { freq: 1500, duration: 0.115, amplitude: 0.98, decayRate: 14, harmonic: 0.28 },
-  mid:    { freq: 1120, duration: 0.105, amplitude: 0.92, decayRate: 15, harmonic: 0.22 },
-  normal: { freq: 880,  duration: 0.095, amplitude: 0.88, decayRate: 16, harmonic: 0.14 },
+  accent: { duration: 0.085, gain: 0.98 },
+  mid:    { duration: 0.080, gain: 0.86 },
+  normal: { duration: 0.076, gain: 0.78 },
 };
+
+const CLICK_SAMPLE = [
+  0.0000, 0.1493, 0.2793, 0.4498, 0.6002, 0.7663, 0.8825, 0.6538,
+  0.6455, 0.8591, 0.9546, 1.0000, 0.9137, 0.7856, 0.6291, 0.3225,
+  0.0096, -0.2258, -0.3943, -0.4819, -0.5408, -0.5657, -0.5490, -0.5420,
+  -0.5435, -0.5380, -0.5116, -0.4435, -0.3429, -0.2157, -0.0647, 0.0880,
+  0.2240, 0.3280, 0.3919, 0.4202, 0.4158, 0.3845, 0.3354, 0.2740,
+  0.2044, 0.1283, 0.0465, -0.0370, -0.1175, -0.1890, -0.2445, -0.2783,
+  -0.2863, -0.2678, -0.2257, -0.1656, -0.0946, -0.0207, 0.0489, 0.1082,
+  0.1530, 0.1809, 0.1909, 0.1835, 0.1603, 0.1238, 0.0776, 0.0262,
+  -0.0255, -0.0723, -0.1094, -0.1330, -0.1409, -0.1326, -0.1096, -0.0754,
+  -0.0344, 0.0080, 0.0468, 0.0774, 0.0967, 0.1029, 0.0961, 0.0778,
+  0.0510, 0.0195, -0.0126, -0.0411, -0.0625, -0.0743, -0.0753, -0.0660,
+  -0.0481, -0.0243, 0.0015, 0.0257, 0.0446, 0.0559, 0.0580, 0.0511,
+  0.0367, 0.0174, -0.0034, -0.0225, -0.0367, -0.0441, -0.0437, -0.0360,
+  -0.0227, -0.0064, 0.0101, 0.0237, 0.0324, 0.0347, 0.0306, 0.0212,
+  0.0085, -0.0051, -0.0168, -0.0246, -0.0273, -0.0244, -0.0170, -0.0066,
+  0.0045, 0.0140, 0.0200, 0.0215, 0.0185, 0.0117, 0.0029, -0.0061,
+  -0.0131, -0.0169, -0.0166, -0.0127, -0.0061, 0.0014, 0.0082, 0.0127,
+  0.0139, 0.0117, 0.0069, 0.0007, -0.0053, -0.0096, -0.0112, -0.0100,
+  -0.0062, -0.0012, 0.0039, 0.0077, 0.0092, 0.0081, 0.0050, 0.0007,
+  -0.0035, -0.0065, -0.0075, -0.0064, -0.0035, 0.0002, 0.0036, 0.0057,
+  0.0061, 0.0046, 0.0019, -0.0012, -0.0038, -0.0050, -0.0047, -0.0029,
+  -0.0003, 0.0022, 0.0039, 0.0042, 0.0031, 0.0011, -0.0011, -0.0028,
+  -0.0035, -0.0030, -0.0015, 0.0004, 0.0021, 0.0029, 0.0027, 0.0015,
+  -0.0001, -0.0016, -0.0024, -0.0023, -0.0014, -0.0000, 0.0013, 0.0020,
+];
 
 class MetronomeEngine {
   constructor() {
@@ -31,7 +58,6 @@ class MetronomeEngine {
 
     this._ctx         = null;
     this._masterGain  = null;
-    this._compressor  = null;
     this._accentBuf   = null;
     this._midBuf      = null;
     this._clickBuf    = null;
@@ -53,16 +79,8 @@ class MetronomeEngine {
     if (!this._ctx) {
       this._ctx = new AudioContext();
       this._masterGain = this._ctx.createGain();
-      this._masterGain.gain.value = CLICK_GAIN;
-
-      this._compressor = this._ctx.createDynamicsCompressor();
-      this._compressor.threshold.value = -16;
-      this._compressor.knee.value = 20;
-      this._compressor.ratio.value = 6;
-      this._compressor.attack.value = 0.003;
-      this._compressor.release.value = 0.08;
-      this._masterGain.connect(this._compressor);
-      this._compressor.connect(this._ctx.destination);
+      this._masterGain.gain.value = CLICK_OUTPUT_GAIN;
+      this._masterGain.connect(this._ctx.destination);
 
       this._accentBuf = this._makeClick(CLICK_SETTINGS.accent);
       this._midBuf    = this._makeClick(CLICK_SETTINGS.mid);
@@ -73,23 +91,22 @@ class MetronomeEngine {
     }
   }
 
-  _makeClick({ freq, duration, amplitude, decayRate, harmonic }) {
+  _makeClick({ duration, gain }) {
     const sr = this._ctx.sampleRate;
     const len = Math.floor(sr * duration);
     const buf = this._ctx.createBuffer(2, len, sr);
-    const attack = Math.max(1, Math.floor(sr * 0.006));
-    const release = Math.max(1, Math.floor(sr * 0.018));
+    const release = Math.max(1, Math.floor(sr * 0.010));
 
     for (let ch = 0; ch < 2; ch++) {
       const d = buf.getChannelData(ch);
       for (let i = 0; i < len; i++) {
-        const t = i / sr;
-        const attackEnv = i < attack ? 0.5 - 0.5 * Math.cos(Math.PI * i / attack) : 1;
+        const pos = (i / (len - 1)) * (CLICK_SAMPLE.length - 1);
+        const idx = Math.floor(pos);
+        const frac = pos - idx;
+        const a = CLICK_SAMPLE[idx] ?? 0;
+        const b = CLICK_SAMPLE[idx + 1] ?? a;
         const releaseEnv = i > len - release ? Math.max(0, (len - i) / release) : 1;
-        const env = attackEnv * releaseEnv * Math.exp(-t * decayRate);
-        const fundamental = Math.sin(2 * Math.PI * freq * t);
-        const overtone = Math.sin(2 * Math.PI * freq * 2 * t);
-        d[i] = amplitude * env * (fundamental + harmonic * overtone) / (1 + harmonic);
+        d[i] = gain * releaseEnv * (a + (b - a) * frac);
       }
     }
     return buf;
