@@ -16,6 +16,13 @@ const TIME_SIGNATURES = {
 
 // ── MetronomeEngine ──────────────────────────────────────────────────────────
 
+const CLICK_GAIN = 1.65;
+const CLICK_SETTINGS = {
+  accent: { freq: 1500, duration: 0.075, amplitude: 0.95, decayRate: 28 },
+  mid:    { freq: 1100, duration: 0.070, amplitude: 0.82, decayRate: 32 },
+  normal: { freq: 850,  duration: 0.065, amplitude: 0.72, decayRate: 36 },
+};
+
 class MetronomeEngine {
   constructor() {
     this.bpm = 120;
@@ -23,6 +30,7 @@ class MetronomeEngine {
     this.isPlaying = false;
 
     this._ctx         = null;
+    this._masterGain  = null;
     this._accentBuf   = null;
     this._midBuf      = null;
     this._clickBuf    = null;
@@ -43,16 +51,20 @@ class MetronomeEngine {
   async initAudio() {
     if (!this._ctx) {
       this._ctx = new AudioContext();
-      this._accentBuf = this._makeClick(1400, 0.06, 0.90, 35);
-      this._midBuf    = this._makeClick(1000, 0.05, 0.70, 40);
-      this._clickBuf  = this._makeClick(750,  0.05, 0.55, 45);
+      this._masterGain = this._ctx.createGain();
+      this._masterGain.gain.value = CLICK_GAIN;
+      this._masterGain.connect(this._ctx.destination);
+
+      this._accentBuf = this._makeClick(CLICK_SETTINGS.accent);
+      this._midBuf    = this._makeClick(CLICK_SETTINGS.mid);
+      this._clickBuf  = this._makeClick(CLICK_SETTINGS.normal);
     }
     if (this._ctx.state === 'suspended') {
       await this._ctx.resume();
     }
   }
 
-  _makeClick(freq, duration, amplitude, decayRate) {
+  _makeClick({ freq, duration, amplitude, decayRate }) {
     const sr = this._ctx.sampleRate;
     const len = Math.floor(sr * duration);
     const buf = this._ctx.createBuffer(2, len, sr);
@@ -119,7 +131,7 @@ class MetronomeEngine {
 
       const src = ctx.createBufferSource();
       src.buffer = buf;
-      src.connect(ctx.destination);
+      src.connect(this._masterGain);
       src.start(this._nextBeatTime);
 
       this._queue.push({ beat, time: this._nextBeatTime });
