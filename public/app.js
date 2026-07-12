@@ -17,6 +17,8 @@ const TIME_SIGNATURES = {
 // ── MetronomeEngine ──────────────────────────────────────────────────────────
 
 const CLICK_OUTPUT_GAIN = 0.98;
+// Play the existing short click sample faster for a brighter, higher-pitched tick.
+const CLICK_PITCH_MULTIPLIER = 1.35;
 const CLICK_SETTINGS = {
   accent: { duration: 0.026, gain: 0.98 },
   mid:    { duration: 0.023, gain: 0.86 },
@@ -162,6 +164,7 @@ class MetronomeEngine {
 
       const src = ctx.createBufferSource();
       src.buffer = buf;
+      src.playbackRate.value = CLICK_PITCH_MULTIPLIER;
       src.connect(this._masterGain);
       src.start(this._nextBeatTime);
 
